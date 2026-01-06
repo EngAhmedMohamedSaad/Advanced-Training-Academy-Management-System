@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="نظام إدارة مدربين وكورسات أكاديمية هاير انوفيشن">
+    <meta name="keywords" content="أكاديمية, هاير انوفيشن, مدربين, كورسات, إدارة, تدريب">
+    
+    <title>أكاديمية هاير انوفيشن - نظام إدارة المدربين والكورسات</title>
+    
+    <!-- CSS Links -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🏫</text></svg>">
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    
+    <!-- Preload important assets -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="script.js" as="script">
+</head>
+<body>
+    <!-- ==================== Navigation ==================== -->
+    <nav class="navbar" role="navigation" aria-label="القائمة الرئيسية">
+        <div class="nav-container">
+            <!-- Logo -->
+            <div class="logo" role="banner">
+                <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                <h1>أكاديمية هاير انوفيشن</h1>
+                <span class="version" aria-label="الإصدار الثاني الفاصل الواحد">v2.2</span>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="nav-links" role="menubar">
+                <a href="#" class="active" id="navHome" role="menuitem" aria-current="page">
+                    <i class="fas fa-home" aria-hidden="true"></i> الرئيسية
+                </a>
+                <a href="#trainers" id="navTrainers" role="menuitem">
+                    <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i> المدربين
+                </a>
+                <a href="#courses" id="navCourses" role="menuitem">
+                    <i class="fas fa-book" aria-hidden="true"></i> الكورسات
+                </a>
+                <a href="#stats" id="navStats" role="menuitem">
+                    <i class="fas fa-chart-bar" aria-hidden="true"></i> الإحصائيات
+                </a>
+            </div>
+            
+           <!-- Navigation Controls -->
+            <div class="nav-controls">
+                <!-- Change Password Button -->
+                <button class="theme-toggle" id="changePasswordBtn" title="تغيير كلمة المرور" aria-label="تغيير كلمة المرور">
+                    <i class="fas fa-key" aria-hidden="true"></i>
+                </button>
+                
+                <!-- Protection Settings Button -->
+                <button class="theme-toggle" id="protectionSettingsBtn" title="إعدادات الحماية" aria-label="فتح إعدادات الحماية">
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                </button>
+                
+                <!-- Dark/Light Mode Toggle -->
+                <button class="theme-toggle" id="themeToggle" title="تبديل الوضع الليلي/النهاري" aria-label="تبديل وضع التصميم">
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                </button>
+                
+                <!-- Connection Status -->
+                <div id="connectionStatus" class="connection-status online" role="status" aria-live="polite">
+                    <i class="fas fa-wifi" aria-hidden="true"></i> متصل
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== Header/Hero ==================== -->
+    <header class="hero" role="banner">
+        <div class="hero-content">
+            <h2>نظام إدارة مدربين وكورسات أكاديمية هاير انوفيشن</h2>
+            <p>إدارة احترافية لأكثر من 800 مدرب مع إمكانيات متقدمة للبحث والتصفية والتعديل</p>
+            
+            <!-- Features -->
+            <div class="hero-features" role="list" aria-label="مميزات النظام">
+                <div class="feature" role="listitem">
+                    <i class="fas fa-save" aria-hidden="true"></i>
+                    <span>حفظ تلقائي</span>
+                </div>
+                <div class="feature" role="listitem">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <span>بحث متقدم</span>
+                </div>
+                <div class="feature" role="listitem">
+                    <i class="fas fa-filter" aria-hidden="true"></i>
+                    <span>تصفية ذكية</span>
+                </div>
+                <div class="feature" role="listitem">
+                    <i class="fas fa-cloud" aria-hidden="true"></i>
+                    <span>نسخ احتياطي</span>
+                </div>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="stats" role="region" aria-label="إحصائيات النظام">
+                <div class="stat">
+                    <span class="stat-number" id="totalTrainers">0</span>
+                    <span class="stat-label">مدرب</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="maleTrainers">0</span>
+                    <span class="stat-label">مدربين ذكور</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="femaleTrainers">0</span>
+                    <span class="stat-label">مدربات إناث</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="storageStatus">100%</span>
+                    <span class="stat-label">سعة التخزين</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-image" aria-hidden="true">
+            <i class="fas fa-users"></i>
+        </div>
+    </header>
+
+    <!-- ==================== Main Content ==================== -->
+    <main id="mainContent">
+        <!-- Trainers Filter Section -->
+        <section class="filter-section" id="trainersFilterSection" aria-labelledby="filterTitle">
+            <div class="container">
+                <h3 id="filterTitle"><i class="fas fa-filter" aria-hidden="true"></i> تصفية المدربين</h3>
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="text" id="searchInput" placeholder="ابحث بالاسم، الجنس، التخصص..." aria-label="بحث المدربين">
+                    </div>
+                    <select id="genderFilter" aria-label="تصفية حسب الجنس">
+                        <option value="">الجنس</option>
+                        <option value="ذكر">ذكر</option>
+                        <option value="أنثى">أنثى</option>
+                    </select>
+                    <select id="qualificationFilter" aria-label="تصفية حسب المؤهل العلمي">
+                        <option value="">كل المؤهلات</option>
+                        <option value="دكتوراه">دكتوراه</option>
+                        <option value="ماجستير">ماجستير</option>
+                        <option value="بكالوريوس">بكالوريوس</option>
+                        <option value="دبلوم">دبلوم</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                    <select id="specializationFilter" aria-label="تصفية حسب التخصص">
+                        <option value="">كل التخصصات</option>
+                        <option value="تكنولوجيا المعلومات">تكنولوجيا المعلومات</option>
+                        <option value="إدارة الأعمال">إدارة الأعمال</option>
+                        <option value="الهندسة">الهندسة</option>
+                        <option value="العلوم">العلوم</option>
+                        <option value="اللغات">اللغات</option>
+                        <option value="التسويق">التسويق</option>
+                        <option value="المحاسبة">المحاسبة</option>
+                        <option value="الطب">الطب</option>
+                        <option value="القانون">القانون</option>
+                    </select>
+                    <button class="btn-reset" id="resetFilters" aria-label="إعادة تعيين الفلاتر">
+                        <i class="fas fa-redo" aria-hidden="true"></i> إعادة تعيين
+                    </button>
+                </div>
+                <div class="filter-info">
+                    <p id="filterResults" role="status" aria-live="polite">عرض جميع المدربين</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trainers Section -->
+        <section class="trainers-section" id="trainers" aria-labelledby="trainersTitle">
+            <div class="container">
+                <div class="section-header">
+                    <h3 id="trainersTitle"><i class="fas fa-chalkboard-teacher" aria-hidden="true"></i> قائمة المدربين</h3>
+                    <div class="section-actions">
+                        <button class="btn-add" id="openAddForm" aria-label="إضافة مدرب جديد">
+                            <i class="fas fa-user-plus" aria-hidden="true"></i> إضافة مدرب جديد
+                        </button>
+                        <button class="btn-import" id="importBtn" aria-label="استيراد بيانات المدربين">
+                            <i class="fas fa-file-import" aria-hidden="true"></i> استيراد
+                        </button>
+                        <button class="btn-export" id="exportBtn" aria-label="تصدير بيانات المدربين">
+                            <i class="fas fa-file-export" aria-hidden="true"></i> تصدير
+                        </button>
+                        <button class="btn-delete-all" id="deleteAllTrainersBtn" aria-label="حذف جميع المدربين">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i> حذف الكل
+                        </button>
+                        <input type="file" id="importInput" accept=".json" style="display: none;" aria-hidden="true">
+                    </div>
+                </div>
+                
+                <!-- Trainers Grid -->
+                <div class="trainers-grid" id="trainersContainer" role="list" aria-label="قائمة المدربين">
+                    <!-- سيتم إضافة المدربين ديناميكياً هنا -->
+                    <div class="loading-trainers">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>جاري تحميل المدربين...</p>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        <span id="paginationInfo" role="status" aria-live="polite">عرض 0 من 0 مدرب</span>
+                    </div>
+                    <div class="pagination" id="pagination" role="navigation" aria-label="التنقل بين صفحات المدربين">
+                        <!-- سيتم إضافة أرقام الصفحات هنا -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Courses Section -->
+        <section class="courses-section" id="courses" aria-labelledby="coursesTitle">
+            <div class="container">
+                <div class="section-header">
+                    <h3 id="coursesTitle"><i class="fas fa-book" aria-hidden="true"></i> إدارة الكورسات</h3>
+                    <div class="section-actions">
+                        <button class="btn-add" id="openCourseForm" aria-label="إضافة كورس جديد">
+                            <i class="fas fa-plus-circle" aria-hidden="true"></i> إضافة كورس جديد
+                        </button>
+                        <button class="btn-import" id="importCoursesBtn" aria-label="استيراد الكورسات">
+                            <i class="fas fa-file-import" aria-hidden="true"></i> استيراد كورسات
+                        </button>
+                        <button class="btn-export" id="exportCoursesBtn" aria-label="تصدير الكورسات">
+                            <i class="fas fa-file-export" aria-hidden="true"></i> تصدير كورسات
+                        </button>
+                        <button class="btn-delete-all" id="deleteAllCoursesBtn" aria-label="حذف جميع الكورسات">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i> حذف الكل
+                        </button>
+                        <input type="file" id="importCoursesInput" accept=".json" style="display: none;" aria-hidden="true">
+                    </div>
+                </div>
+                
+                <!-- Courses Search -->
+                <div class="filter-section courses-search">
+                    <h3><i class="fas fa-search" aria-hidden="true"></i> بحث الكورسات</h3>
+                    <div class="filter-controls">
+                        <div class="search-box">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <input type="text" id="courseSearchInput" placeholder="ابحث باسم الكورس (عربي أو إنجليزي)..." aria-label="بحث الكورسات">
+                        </div>
+                        <button class="btn-reset" id="resetCourseFilters" aria-label="إعادة تعيين بحث الكورسات">
+                            <i class="fas fa-redo" aria-hidden="true"></i> إعادة تعيين
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Courses Grid -->
+                <div class="courses-grid" id="coursesContainer" role="list" aria-label="قائمة الكورسات">
+                    <!-- سيتم إضافة الكورسات ديناميكياً هنا -->
+                    <div class="loading-courses">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>جاري تحميل الكورسات...</p>
+                    </div>
+                </div>
+                
+                <!-- Courses Pagination -->
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        <span id="coursePaginationInfo" role="status" aria-live="polite">عرض 0 من 0 كورس</span>
+                    </div>
+                    <div class="pagination" id="coursePagination" role="navigation" aria-label="التنقل بين صفحات الكورسات">
+                        <!-- سيتم إضافة أرقام الصفحات هنا -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Section -->
+        <section class="info-section" aria-labelledby="infoTitle">
+            <div class="container">
+                <h3 id="infoTitle"><i class="fas fa-info-circle" aria-hidden="true"></i> معلومات النظام</h3>
+                <div class="info-content">
+                    <div class="info-card" role="article">
+                        <div class="info-icon">
+                            <i class="fas fa-save" aria-hidden="true"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>حفظ تلقائي</h4>
+                            <p>جميع التعديلات والإضافات تحفظ تلقائياً في متصفحك ولا تضيع عند إغلاق الصفحة.</p>
+                        </div>
+                    </div>
+                    <div class="info-card" role="article">
+                        <div class="info-icon">
+                            <i class="fas fa-database" aria-hidden="true"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>سعة تخزين كبيرة</h4>
+                            <p>النظام يدعم تخزين أكثر من 800 مدرب بكل تفاصيلهم مع الحفاظ على الأداء السريع.</p>
+                        </div>
+                    </div>
+                    <div class="info-card" role="article">
+                        <div class="info-icon">
+                            <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>نسخ احتياطي</h4>
+                            <p>يمكنك تصدير جميع البيانات واستيرادها في أي وقت للنسخ الاحتياطي أو النقل بين الأجهزة.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section class="stats-section" id="stats" aria-labelledby="statsTitle">
+            <div class="container">
+                <h3 id="statsTitle"><i class="fas fa-chart-bar" aria-hidden="true"></i> إحصائيات المدربين</h3>
+                <div class="stats-grid">
+                    <div class="stat-card" role="region" aria-label="إجمالي المدربين">
+                        <div class="stat-icon">
+                            <i class="fas fa-users" aria-hidden="true"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>إجمالي المدربين</h4>
+                            <p class="stat-value" id="statTotal">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" role="region" aria-label="المدربين الذكور">
+                        <div class="stat-icon">
+                            <i class="fas fa-male" aria-hidden="true"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>مدربين ذكور</h4>
+                            <p class="stat-value" id="statMale">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" role="region" aria-label="المدربات الإناث">
+                        <div class="stat-icon">
+                            <i class="fas fa-female" aria-hidden="true"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>مدربات إناث</h4>
+                            <p class="stat-value" id="statFemale">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" role="region" aria-label="حاملي الدكتوراه">
+                        <div class="stat-icon">
+                            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>حاملي الدكتوراه</h4>
+                            <p class="stat-value" id="statPhd">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== Modals ==================== -->
+    
+    <!-- Trainer Modal -->
+    <div class="modal" id="trainerModal" style="display: none;" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">إضافة مدرب جديد</h3>
+                <button class="modal-close" id="closeModal" aria-label="إغلاق النافذة">&times;</button>
+            </div>
+            <form id="trainerForm">
+                <input type="hidden" id="trainerId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name"><i class="fas fa-user" aria-hidden="true"></i> الاسم الكامل *</label>
+                        <input type="text" id="name" required aria-required="true">
+                        <small class="form-hint">أدخل الاسم الرباعي للمدرب</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone"><i class="fas fa-phone" aria-hidden="true"></i> رقم الهاتف *</label>
+                        <input type="tel" id="phone" required pattern="[0-9]{10,15}" aria-required="true">
+                        <small class="form-hint">أدخل رقم الهاتف (10-15 رقم)</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email"><i class="fas fa-envelope" aria-hidden="true"></i> البريد الإلكتروني *</label>
+                        <input type="email" id="email" required aria-required="true">
+                        <small class="form-hint">example@domain.com</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="nationality"><i class="fas fa-globe" aria-hidden="true"></i> الجنسية *</label>
+                        <input type="text" id="nationality" required list="nationalities" aria-required="true">
+                        <datalist id="nationalities">
+                            <option value="مصري">مصري</option>
+                            <option value="سعودي">سعودي</option>
+                            <option value="أردني">أردني</option>
+                            <option value="إماراتي">إماراتي</option>
+                            <option value="قطري">قطري</option>
+                            <option value="كويتي">كويتي</option>
+                            <option value="عماني">عماني</option>
+                            <option value="بحريني">بحريني</option>
+                            <option value="يمني">يمني</option>
+                            <option value="سوري">سوري</option>
+                            <option value="لبناني">لبناني</option>
+                            <option value="فلسطيني">فلسطيني</option>
+                            <option value="عراقي">عراقي</option>
+                            <option value="سوداني">سوداني</option>
+                            <option value="جزائري">جزائري</option>
+                            <option value="مغربي">مغربي</option>
+                            <option value="تونسي">تونسي</option>
+                            <option value="ليبي">ليبي</option>
+                            <option value="موريتاني">موريتاني</option>
+                        </datalist>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gender"><i class="fas fa-venus-mars" aria-hidden="true"></i> الجنس *</label>
+                        <select id="gender" required aria-required="true">
+                            <option value="">اختر الجنس</option>
+                            <option value="ذكر">ذكر</option>
+                            <option value="أنثى">أنثى</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="qualification"><i class="fas fa-graduation-cap" aria-hidden="true"></i> المؤهل العلمي *</label>
+                        <select id="qualification" required aria-required="true">
+                            <option value="">اختر المؤهل</option>
+                            <option value="دكتوراه">دكتوراه</option>
+                            <option value="ماجستير">ماجستير</option>
+                            <option value="بكالوريوس">بكالوريوس</option>
+                            <option value="دبلوم">دبلوم</option>
+                            <option value="أخرى">أخرى</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="specialization"><i class="fas fa-briefcase" aria-hidden="true"></i> التخصص *</label>
+                        <input type="text" id="specialization" required list="specializations" aria-required="true">
+                        <datalist id="specializations">
+                            <option value="تكنولوجيا المعلومات">تكنولوجيا المعلومات</option>
+                            <option value="إدارة الأعمال">إدارة الأعمال</option>
+                            <option value="الهندسة">الهندسة</option>
+                            <option value="العلوم">العلوم</option>
+                            <option value="اللغات">اللغات</option>
+                            <option value="التسويق">التسويق</option>
+                            <option value="المحاسبة">المحاسبة</option>
+                            <option value="الطب">الطب</option>
+                            <option value="القانون">القانون</option>
+                            <option value="الفنون">الفنون</option>
+                            <option value="التربية">التربية</option>
+                            <option value="الصحة">الصحة</option>
+                            <option value="الزراعة">الزراعة</option>
+                            <option value="السياحة">السياحة</option>
+                            <option value="الإعلام">الإعلام</option>
+                        </datalist>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="idFile"><i class="fas fa-id-card" aria-hidden="true"></i> بطاقة الهوية</label>
+                        <input type="file" id="idFile" accept="image/*,.pdf" style="display: none;">
+                        <div class="file-upload">
+                            <button type="button" class="btn-upload" id="idFileBtn">
+                                <i class="fas fa-upload" aria-hidden="true"></i> اختر ملف
+                            </button>
+                            <span class="file-name" id="idFileName">لم يتم اختيار ملف</span>
+                        </div>
+                        <small class="form-hint">الصيغ المدعومة: صور أو PDF (حتى 2MB)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="cvFile"><i class="fas fa-file-alt" aria-hidden="true"></i> السيرة الذاتية</label>
+                        <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display: none;">
+                        <div class="file-upload">
+                            <button type="button" class="btn-upload" id="cvFileBtn">
+                                <i class="fas fa-upload" aria-hidden="true"></i> اختر ملف
+                            </button>
+                            <span class="file-name" id="cvFileName">لم يتم اختيار ملف</span>
+                        </div>
+                        <small class="form-hint">PDF أو Word (حتى 5MB)</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="details"><i class="fas fa-info-circle" aria-hidden="true"></i> التفاصيل الإضافية</label>
+                        <textarea id="details" rows="6" placeholder="يمكنك إضافة جميع التفاصيل المتعلقة بالمدرب هنا مثل الخبرات والدورات السابقة والمهارات والإنجازات..." aria-label="تفاصيل إضافية عن المدرب"></textarea>
+                        <small class="form-hint">أضف معلومات مفصلة عن خبرات المدرب وإنجازاته</small>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="cancelForm" aria-label="إلغاء العملية">
+                        <i class="fas fa-times" aria-hidden="true"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn-submit" id="submitForm" aria-label="حفظ بيانات المدرب">
+                        <i class="fas fa-save" aria-hidden="true"></i> حفظ البيانات 
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course Modal -->
+    <div class="modal" id="courseModal" style="display: none;" role="dialog" aria-labelledby="courseModalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="courseModalTitle">إضافة كورس جديد</h3>
+                <button class="modal-close" id="closeCourseModal" aria-label="إغلاق نافذة الكورس">&times;</button>
+            </div>
+            <form id="courseForm">
+                <input type="hidden" id="courseId">
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="courseNameAr"><i class="fas fa-font" aria-hidden="true"></i> اسم الكورس (عربي) *</label>
+                        <input type="text" id="courseNameAr" required aria-required="true">
+                        <small class="form-hint">أدخل اسم الكورس باللغة العربية</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="courseNameEn"><i class="fas fa-font" aria-hidden="true"></i> اسم الكورس (إنجليزي) *</label>
+                        <input type="text" id="courseNameEn" required aria-required="true">
+                        <small class="form-hint">أدخل اسم الكورس باللغة الإنجليزية</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="courseSubSpecialization"><i class="fas fa-tags" aria-hidden="true"></i> التخصص الفرعي</label>
+                        <input type="text" id="courseSubSpecialization">
+                        <small class="form-hint">أدخل التخصص الفرعي للكورس (اختياري)</small>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="cancelCourseForm" aria-label="إلغاء إضافة الكورس">
+                        <i class="fas fa-times" aria-hidden="true"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn-submit" id="submitCourseForm" aria-label="حفظ الكورس">
+                        <i class="fas fa-save" aria-hidden="true"></i> حفظ الكورس
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal" style="display: none;" role="dialog" aria-labelledby="profileName" aria-modal="true">
+        <div class="modal-content profile-modal">
+            <div class="modal-header">
+                <h3 id="profileName">الملف الشخصي</h3>
+                <button class="modal-close" id="closeProfile" aria-label="إغلاق نافذة الملف الشخصي">&times;</button>
+            </div>
+            <div class="profile-content" id="profileContent">
+                <!-- سيتم تعبئة المحتوى ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Protection System Modal -->
+    <div class="modal" id="protectionModal" style="display: none;" role="dialog" aria-labelledby="protectionTitle" aria-modal="true">
+        <div class="modal-content protection-modal">
+            <div class="modal-header">
+                <h3 id="protectionTitle"><i class="fas fa-shield-alt"></i> التحقق من الهوية</h3>
+                <button class="modal-close" id="closeProtectionModal">&times;</button>
+            </div>
+            <div class="protection-content">
+                <div class="protection-message" id="protectionMessage">
+                    <i class="fas fa-lock"></i>
+                    <p>يجب التحقق من هويتك للمتابعة</p>
+                </div>
+                <div class="protection-input">
+                    <input type="password" id="protectionPassword" placeholder="أدخل كلمة المرور" autocomplete="off">
+                    <button id="togglePasswordBtn">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="protection-actions">
+                    <button class="btn-cancel" id="cancelProtection">إلغاء</button>
+                    <button class="btn-submit" id="confirmProtection">تأكيد</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal" id="imageModal" style="display: none;">
+        <div class="modal-content image-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-image"></i> معاينة الصورة</h3>
+                <button class="modal-close" id="closeImageModal">&times;</button>
+            </div>
+            <div class="image-modal-content" id="imageModalContent"></div>
+        </div>
+    </div>
+
+    <!-- PDF Modal -->
+    <div class="modal" id="pdfModal" style="display: none;">
+        <div class="modal-content pdf-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-pdf"></i> معاينة ملف PDF</h3>
+                <button class="modal-close" id="closePdfModal">&times;</button>
+            </div>
+            <div class="pdf-modal-content">
+                <iframe id="pdfViewer" style="width: 100%; height: 600px; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Trainer -->
+    <div class="modal" id="confirmModal" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> تأكيد الحذف</h3>
+                <button class="modal-close" id="closeConfirm" aria-label="إغلاق نافذة التأكيد">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p id="confirmMessage">هل أنت متأكد من حذف هذا المدرب؟</p>
+            </div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="cancelDelete" aria-label="إلغاء الحذف">إلغاء</button>
+                <button class="btn-confirm" id="confirmDelete" aria-label="تأكيد حذف المدرب">نعم، احذف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Course -->
+    <div class="modal" id="confirmCourseModal" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> تأكيد حذف الكورس</h3>
+                <button class="modal-close" id="closeConfirmCourse" aria-label="إغلاق نافذة تأكيد حذف الكورس">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p id="confirmCourseMessage">هل أنت متأكد من حذف هذا الكورس؟</p>
+            </div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="cancelCourseDelete" aria-label="إلغاء حذف الكورس">إلغاء</button>
+                                <button class="btn-confirm" id="confirmCourseDelete" aria-label="تأكيد حذف الكورس">نعم، احذف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete All Trainers -->
+    <div class="modal" id="confirmDeleteAllTrainersModal" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> تأكيد حذف جميع المدربين</h3>
+                <button class="modal-close" id="closeDeleteAllTrainers" aria-label="إغلاق نافذة حذف جميع المدربين">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <div class="delete-all-warning">
+                    <h4><i class="fas fa-exclamation-circle" aria-hidden="true"></i> تحذير!</h4>
+                    <p>أنت على وشك حذف جميع المدربين في النظام. هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع البيانات بشكل دائم.</p>
+                </div>
+                
+                <div class="delete-all-stats">
+                    <div class="delete-all-stat">
+                        <span class="delete-all-stat-number" id="totalTrainersToDelete">0</span>
+                        <span class="delete-all-stat-label">إجمالي المدربين</span>
+                    </div>
+                    <div class="delete-all-stat">
+                        <span class="delete-all-stat-number" id="maleTrainersToDelete">0</span>
+                        <span class="delete-all-stat-label">مدربين ذكور</span>
+                    </div>
+                    <div class="delete-all-stat">
+                        <span class="delete-all-stat-number" id="femaleTrainersToDelete">0</span>
+                        <span class="delete-all-stat-label">مدربات إناث</span>
+                    </div>
+                </div>
+                
+                <p style="text-align: center; color: var(--danger-color); font-weight: 700;">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    هل أنت متأكد تماماً من أنك تريد المتابعة؟
+                </p>
+                
+                <div class="delete-all-actions">
+                    <button class="btn-cancel" id="cancelDeleteAllTrainers" aria-label="إلغاء حذف جميع المدربين">
+                        <i class="fas fa-times" aria-hidden="true"></i> إلغاء
+                    </button>
+                    <button class="btn-confirm-delete-all" id="confirmDeleteAllTrainers" aria-label="تأكيد حذف جميع المدربين">
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i> نعم، احذف جميع المدربين
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete All Courses -->
+    <div class="modal" id="confirmDeleteAllCoursesModal" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> تأكيد حذف جميع الكورسات</h3>
+                <button class="modal-close" id="closeDeleteAllCourses" aria-label="إغلاق نافذة حذف جميع الكورسات">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <div class="delete-all-warning">
+                    <h4><i class="fas fa-exclamation-circle" aria-hidden="true"></i> تحذير!</h4>
+                    <p>أنت على وشك حذف جميع الكورسات في النظام. هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع الكورسات بشكل دائم.</p>
+                </div>
+                
+                <div class="delete-all-stats">
+                    <div class="delete-all-stat">
+                        <span class="delete-all-stat-number" id="totalCoursesToDelete">0</span>
+                        <span class="delete-all-stat-label">إجمالي الكورسات</span>
+                    </div>
+                    <div class="delete-all-stat">
+                        <span class="delete-all-stat-number" id="recentCoursesToDelete">0</span>
+                        <span class="delete-all-stat-label">مضافة مؤخراً</span>
+                    </div>
+                </div>
+                
+                <p style="text-align: center; color: var(--danger-color); font-weight: 700;">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    هل أنت متأكد تماماً من أنك تريد المتابعة؟
+                </p>
+                
+                <div class="delete-all-actions">
+                    <button class="btn-cancel" id="cancelDeleteAllCourses" aria-label="إلغاء حذف جميع الكورسات">
+                        <i class="fas fa-times" aria-hidden="true"></i> إلغاء
+                    </button>
+                    <button class="btn-confirm-delete-all" id="confirmDeleteAllCourses" aria-label="تأكيد حذف جميع الكورسات">
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i> نعم، احذف جميع الكورسات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== UI Components ==================== -->
+    
+    <!-- Notification -->
+    <div id="notification" class="notification" role="alert" aria-live="assertive"></div>
+    
+    <!-- Global Loader -->
+    <div id="globalLoader" class="global-loader" style="display: none;" role="alert" aria-live="assertive">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p>جاري معالجة البيانات...</p>
+        </div>
+    </div>
+    
+    <!-- Sync Indicator -->
+    <div id="syncIndicator" class="sync-indicator" style="display: none;" role="status" aria-live="polite">
+        <i class="fas fa-sync-alt fa-spin" aria-hidden="true"></i>
+        <span>جاري المزامنة...</span>
+    </div>
+    
+    <!-- Verification Badge -->
+    <div class="verification-badge" id="verificationBadge" style="display: none;" role="status" aria-live="polite">
+        <i class="fas fa-check-circle" aria-hidden="true"></i>
+        <span>تم التحقق من الهوية بنجاح</span>
+    </div>
+    
+    <!-- Block Notification -->
+    <div class="block-notification" id="blockNotification" style="display: none;" role="alert" aria-live="assertive">
+        <i class="fas fa-ban" aria-hidden="true"></i>
+        <h3>تم حظر الإجراءات مؤقتاً</h3>
+        <p>لقد تجاوزت عدد المحاولات المسموح بها. سيتم فتح النظام بعد <span id="blockTimer">60</span> ثانية.</p>
+        <button class="protection-btn btn-protection-cancel" id="refreshPage" style="margin-top: 20px;">
+            <i class="fas fa-redo" aria-hidden="true"></i> تحديث الصفحة
+        </button>
+    </div>
+
+    <!-- ==================== Footer ==================== -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                    <h3>أكاديمية هاير انوفيشن</h3>
+                    <p>نظام إدارة المدربين والكورسات المتقدم</p>
+                </div>
+                <div class="footer-info">
+                    <p><i class="fas fa-check-circle" aria-hidden="true"></i> يدعم حفظ البيانات تلقائياً</p>
+                    <p><i class="fas fa-check-circle" aria-hidden="true"></i> سعة تخزين لأكثر من 800 مدرب</p>
+                    <p><i class="fas fa-check-circle" aria-hidden="true"></i> بحث وتصفية متقدمة</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>جميع الحقوق محفوظة &copy; <span id="currentYear"></span> أكاديمية هاير انوفيشن - الإصدار 2.2</p>
+                <div class="footer-actions">
+                    <button id="backupBtn" class="footer-btn" aria-label="تنزيل نسخة احتياطية">
+                        <i class="fas fa-download" aria-hidden="true"></i> نسخة احتياطية
+                    </button>
+                    <button id="restoreBtn" class="footer-btn" aria-label="استعادة بيانات">
+                        <i class="fas fa-upload" aria-hidden="true"></i> استعادة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== Scripts ==================== -->
+    <script src="script.js"></script>
+    
+    <!-- Initialize current year -->
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // زر اختبار سريع
+        const testBtn = document.createElement('button');
+        testBtn.innerHTML = '🧪 اختبار النظام';
+        testBtn.style.position = 'fixed';
+        testBtn.style.bottom = '20px';
+        testBtn.style.left = '20px';
+        testBtn.style.zIndex = '10000';
+        testBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        testBtn.style.color = 'white';
+        testBtn.style.border = 'none';
+        testBtn.style.padding = '15px 25px';
+        testBtn.style.borderRadius = '50px';
+        testBtn.style.fontWeight = 'bold';
+        testBtn.style.cursor = 'pointer';
+        testBtn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+        testBtn.style.display = 'flex';
+        testBtn.style.alignItems = 'center';
+        testBtn.style.gap = '10px';
+        testBtn.style.fontSize = '16px';
+        
+        testBtn.onclick = function() {
+            if (window.testSystem) {
+                window.testSystem();
+            } else {
+                alert('جاري تحميل النظام...');
+            }
+        };
+        
+        document.body.appendChild(testBtn);
+    </script>
+</body>
+</html>
