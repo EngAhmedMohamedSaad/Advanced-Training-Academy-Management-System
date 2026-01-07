@@ -800,38 +800,6 @@
     <script src="script.js"></script>
     
     <!-- Initialize current year -->
-    <script>
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
-        
-        // زر اختبار سريع
-        const testBtn = document.createElement('button');
-        testBtn.innerHTML = '🧪 اختبار النظام';
-        testBtn.style.position = 'fixed';
-        testBtn.style.bottom = '20px';
-        testBtn.style.left = '20px';
-        testBtn.style.zIndex = '10000';
-        testBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        testBtn.style.color = 'white';
-        testBtn.style.border = 'none';
-        testBtn.style.padding = '15px 25px';
-        testBtn.style.borderRadius = '50px';
-        testBtn.style.fontWeight = 'bold';
-        testBtn.style.cursor = 'pointer';
-        testBtn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-        testBtn.style.display = 'flex';
-        testBtn.style.alignItems = 'center';
-        testBtn.style.gap = '10px';
-        testBtn.style.fontSize = '16px';
-        
-        testBtn.onclick = function() {
-            if (window.testSystem) {
-                window.testSystem();
-            } else {
-                alert('جاري تحميل النظام...');
-            }
-        };
-        
-        document.body.appendChild(testBtn);
-    </script>
+   
 </body>
 </html>
