@@ -1,6 +1,6 @@
 // ============================================
 // نظام إدارة مدربين أكاديمية هاير للابتكار
-// النسخة 2.2 - مع قاعدة بيانات Supabase ونظام الحماية لكل إجراء
+// النسخة 2.3 - مع نظام صلاحيات متقدم
 // ============================================
 
 // بيانات المدربين والكورسات
@@ -15,6 +15,26 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let PASSWORD = 'admin123'; // كلمة المرور الافتراضية
 const MAX_ATTEMPTS = 3; // الحد الأقصى للمحاولات
 const LOCK_TIME = 60000; // 60 ثانية تأخير بعد تجاوز المحاولات
+
+// صلاحيات النظام - الإعدادات الافتراضية
+let permissions = {
+  add_trainer: true,      // يتطلب كلمة مرور لإضافة مدرب
+  edit_trainer: true,     // يتطلب كلمة مرور لتعديل مدرب
+  delete_trainer: true,   // يتطلب كلمة مرور لحذف مدرب
+  add_course: true,       // يتطلب كلمة مرور لإضافة كورس
+  edit_course: true,      // يتطلب كلمة مرور لتعديل كورس
+  delete_course: true,    // يتطلب كلمة مرور لحذف كورس
+  delete_all_trainers: true, // يتطلب كلمة مرور لحذف جميع المدربين
+  delete_all_courses: true,  // يتطلب كلمة مرور لحذف جميع الكورسات
+  import_data: true,      // يتطلب كلمة مرور لاستيراد بيانات
+  export_data: true,      // يتطلب كلمة مرور لتصدير بيانات
+  backup: true,           // يتطلب كلمة مرور للنسخ الاحتياطي
+  restore: true,          // يتطلب كلمة مرور للاستعادة
+  change_password: true,  // يتطلب كلمة مرور لتغيير كلمة المرور
+  manage_permissions: true // يتطلب كلمة مرور لإدارة الصلاحيات
+};
+
+const PERMISSIONS_KEY = 'haier_permissions';
 
 // حالة الحماية
 let failedAttempts = 0;
@@ -47,7 +67,7 @@ const PASSWORD_KEY = 'haier_password';
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log("🚀 نظام إدارة مدربين أكاديمية هاير للابتكار - الإصدار 2.2");
+    console.log("🚀 نظام إدارة مدربين أكاديمية هاير للابتكار - الإصدار 2.3");
     
     // تعيين السنة الحالية في التذييل
     document.getElementById('currentYear').textContent = new Date().getFullYear();
@@ -55,6 +75,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // تحميل إعدادات الحماية وكلمة المرور
     loadSecuritySettings();
     loadPasswordFromStorage();
+    
+    // تحميل الصلاحيات
+    loadPermissions();
     
     // التحقق من حالة القفل
     checkLockStatus();
@@ -79,11 +102,265 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateStorageStatus();
     setupEventListeners();
     
+    // إعداد التنقل بين الأقسام
+    setupNavigation();
+    
     // إظهار رسالة ترحيب
     setTimeout(() => {
         showNotification('مرحباً بك في نظام إدارة مدربين أكاديمية هاير للابتكار!', 'info');
     }, 2000);
 });
+
+// ============================================
+// إدارة الصلاحيات
+// ============================================
+
+// تحميل الصلاحيات من التخزين المحلي
+function loadPermissions() {
+    try {
+        const savedPermissions = localStorage.getItem(PERMISSIONS_KEY);
+        if (savedPermissions) {
+            permissions = JSON.parse(savedPermissions);
+            console.log('✅ تم تحميل الصلاحيات من التخزين المحلي');
+        }
+    } catch (error) {
+        console.error('❌ خطأ في تحميل الصلاحيات:', error);
+    }
+}
+
+// حفظ الصلاحيات في التخزين المحلي
+function savePermissions() {
+    try {
+        localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(permissions));
+        console.log('💾 تم حفظ الصلاحيات في التخزين المحلي');
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في حفظ الصلاحيات:', error);
+        return false;
+    }
+}
+
+// عرض نموذج إدارة الصلاحيات (محمي بكلمة مرور)
+function showPermissionsModal() {
+    requirePassword('manage_permissions', function() {
+        openPermissionsModal();
+    });
+}
+
+// فتح نموذج إدارة الصلاحيات (داخلي)
+function openPermissionsModal() {
+    const modalId = 'permissionsModal_' + Date.now();
+    
+    let permissionsHTML = '';
+    
+    // إنشاء قائمة بالصلاحيات
+    const permissionLabels = {
+        'add_trainer': 'إضافة مدرب جديد',
+        'edit_trainer': 'تعديل بيانات المدرب',
+        'delete_trainer': 'حذف مدرب',
+        'add_course': 'إضافة كورس جديد',
+        'edit_course': 'تعديل كورس',
+        'delete_course': 'حذف كورس',
+        'delete_all_trainers': 'حذف جميع المدربين',
+        'delete_all_courses': 'حذف جميع الكورسات',
+        'import_data': 'استيراد البيانات',
+        'export_data': 'تصدير البيانات',
+        'backup': 'إنشاء نسخة احتياطية',
+        'restore': 'استعادة النسخة الاحتياطية',
+        'change_password': 'تغيير كلمة المرور',
+        'manage_permissions': 'إدارة الصلاحيات'
+    };
+    
+    // بناء واجهة الصلاحيات
+    permissionsHTML += '<div class="permissions-list">';
+    
+    Object.keys(permissions).forEach(key => {
+        const isEnabled = permissions[key];
+        permissionsHTML += `
+            <div class="permission-item">
+                <div class="permission-info">
+                    <h4>${permissionLabels[key] || key}</h4>
+                    <p>${isEnabled ? 'يتطلب كلمة مرور' : 'لا يتطلب كلمة مرور'}</p>
+                </div>
+                <label class="permission-switch">
+                    <input type="checkbox" ${isEnabled ? 'checked' : ''} data-permission="${key}">
+                    <span class="permission-slider"></span>
+                </label>
+            </div>
+        `;
+    });
+    
+    permissionsHTML += '</div>';
+    
+    const modalHTML = `
+        <div class="modal" id="${modalId}" style="display: flex;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-shield"></i> إدارة الصلاحيات</h3>
+                    <button class="modal-close" id="closePermissions_${modalId}" aria-label="إغلاق النافذة">&times;</button>
+                </div>
+                <div style="padding: 30px;">
+                    <div class="permissions-header">
+                        <h4><i class="fas fa-info-circle"></i> تعليمات:</h4>
+                        <p>يمكنك تفعيل أو تعطيل الحاجة لكلمة المرور لكل إجراء على حدة. عند تعطيل الحاجة لكلمة مرور، يمكن تنفيذ الإجراء مباشرة دون طلب كلمة المرور.</p>
+                        <p style="color: var(--primary-color); font-weight: bold; margin-top: 10px;">
+                            <i class="fas fa-shield-alt"></i> إدارة الصلاحيات نفسها تتطلب كلمة مرور للوصول إليها.
+                        </p>
+                    </div>
+                    
+                    ${permissionsHTML}
+                    
+                    <div class="permissions-actions" style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
+                        <button class="btn-cancel" id="cancelPermissions_${modalId}">
+                            <i class="fas fa-times"></i> إلغاء
+                        </button>
+                        <button class="btn-submit" id="savePermissions_${modalId}">
+                            <i class="fas fa-save"></i> حفظ التغييرات
+                        </button>
+                        <button class="btn-reset" id="resetPermissions_${modalId}">
+                            <i class="fas fa-redo"></i> إعادة تعيين
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // إضافة النموذج إلى الجسم
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = modalHTML;
+    document.body.appendChild(modalDiv);
+    
+    // إضافة مستمعي الأحداث
+    const modal = document.getElementById(modalId);
+    const closeBtn = document.getElementById(`closePermissions_${modalId}`);
+    const cancelBtn = document.getElementById(`cancelPermissions_${modalId}`);
+    const saveBtn = document.getElementById(`savePermissions_${modalId}`);
+    const resetBtn = document.getElementById(`resetPermissions_${modalId}`);
+    
+    // إغلاق النموذج
+    closeBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // حفظ الصلاحيات
+    saveBtn.addEventListener('click', () => {
+        // تحديث الصلاحيات من عناصر الإدخال
+        const permissionInputs = modal.querySelectorAll('input[data-permission]');
+        permissionInputs.forEach(input => {
+            const permissionName = input.getAttribute('data-permission');
+            permissions[permissionName] = input.checked;
+        });
+        
+        // حفظ الصلاحيات
+        savePermissions();
+        
+        // إغلاق النافذة
+        modal.remove();
+        
+        // إظهار رسالة نجاح
+        showNotification('تم حفظ إعدادات الصلاحيات بنجاح!', 'success');
+    });
+    
+    // إعادة تعيين الصلاحيات
+    resetBtn.addEventListener('click', () => {
+        if (confirm('هل تريد إعادة تعيين جميع الصلاحيات إلى الإعدادات الافتراضية؟')) {
+            // الإعدادات الافتراضية (جميعها تتطلب كلمة مرور)
+            Object.keys(permissions).forEach(key => {
+                permissions[key] = true;
+            });
+            
+            // تحديث الواجهة
+            const permissionInputs = modal.querySelectorAll('input[data-permission]');
+            permissionInputs.forEach(input => {
+                input.checked = true;
+            });
+            
+            showNotification('تم إعادة تعيين الصلاحيات إلى الإعدادات الافتراضية', 'info');
+        }
+    });
+    
+    // إغلاق النموذج بالضغط خارجيه
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            modal.remove();
+        }
+    });
+}
+
+// ============================================
+// إعداد التنقل بين الأقسام
+// ============================================
+
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-links a');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // إزالة التظليل من جميع الروابط
+            navLinks.forEach(l => l.classList.remove('active'));
+            
+            // إضافة التظليل للرابط المحدد
+            this.classList.add('active');
+            
+            // إذا كان الرابط يشير إلى قسم معين، نقوم بالتمرير إليه
+            const targetId = this.getAttribute('href');
+            if (targetId.startsWith('#')) {
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    e.preventDefault();
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    });
+    
+    // إضافة مستمعي الأحداث للتمرير عند التمرير في الصفحة
+    window.addEventListener('scroll', updateActiveNavLink);
+    
+    // تحديث الرابط النشط عند التحميل
+    updateActiveNavLink();
+}
+
+// تحديث الرابط النشط بناءً على الموقع الحالي
+function updateActiveNavLink() {
+    const sections = document.querySelectorAll('section[id], header[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+    
+    let currentSectionId = '';
+    
+    // تحديد القسم الحالي
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        const sectionHeight = section.clientHeight;
+        if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+            currentSectionId = section.id;
+        }
+    });
+    
+    // إزالة التظليل من جميع الروابط
+    navLinks.forEach(link => link.classList.remove('active'));
+    
+    // إضافة التظليل للرابط المناسب
+    if (currentSectionId) {
+        const activeLink = document.querySelector(`.nav-links a[href="#${currentSectionId}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+        } else {
+            // إذا كنا في الهيدر، نضيف التظليل للرئيسية
+            if (window.scrollY < 500) {
+                document.querySelector('.nav-links a[href="#home"]').classList.add('active');
+            }
+        }
+    } else {
+        // إذا لم نكن في أي قسم، نعود للرئيسية
+        document.querySelector('.nav-links a[href="#home"]').classList.add('active');
+    }
+}
 
 // ============================================
 // تهيئة البيانات التجريبية
@@ -340,13 +617,33 @@ function checkLockStatus() {
     return false;
 }
 
-// عرض نموذج كلمة المرور
-function showPasswordModal(action, callback, data = null) {
-    // التحقق من حالة القفل أولاً
+// التحقق من الصلاحية قبل تنفيذ الإجراءات المحمية
+function requirePassword(action, callback, data = null) {
+    // التحقق من حالة القفل
     if (checkLockStatus()) {
         return;
     }
     
+    // التحقق مما إذا كان هذا الإجراء يتطلب كلمة مرور
+    if (permissions[action] === false) {
+        // لا يتطلب كلمة مرور، تنفيذ الإجراء مباشرة
+        console.log(`✅ الإجراء ${action} لا يتطلب كلمة مرور (معطل)`);
+        if (callback) {
+            if (data) {
+                callback(data);
+            } else {
+                callback();
+            }
+        }
+        return;
+    }
+    
+    // إذا كان الإجراء يتطلب كلمة مرور، عرض نموذج كلمة المرور
+    showPasswordModal(action, callback, data);
+}
+
+// عرض نموذج كلمة المرور
+function showPasswordModal(action, callback, data = null) {
     // إنشاء معرف فريد للنموذج
     const modalId = 'passwordModal_' + Date.now();
     
@@ -391,6 +688,9 @@ function showPasswordModal(action, callback, data = null) {
             break;
         case 'change_password':
             actionText = 'تغيير كلمة المرور';
+            break;
+        case 'manage_permissions':
+            actionText = 'إدارة الصلاحيات';
             break;
         default:
             actionText = 'إجراء محمي';
@@ -536,17 +836,6 @@ function handlePasswordSubmit(modalId, action, callback, data) {
             }, 500);
         }
     }
-}
-
-// التحقق من الصلاحية قبل تنفيذ الإجراءات المحمية
-function requirePassword(action, callback, data = null) {
-    // التحقق من حالة القفل
-    if (checkLockStatus()) {
-        return;
-    }
-    
-    // عرض نموذج كلمة المرور
-    showPasswordModal(action, callback, data);
 }
 
 // ============================================
@@ -1051,7 +1340,7 @@ function createBackup() {
             timestamp: new Date().toISOString(),
             trainerCount: trainers.length,
             courseCount: courses.length,
-            version: '2.2'
+            version: '2.3'
         };
         
         localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
@@ -2152,6 +2441,10 @@ function validateTrainerForm() {
     return true;
 }
 
+// ============================================
+// عرض الملف الشخصي الكامل مع زر التحميل
+// ============================================
+
 // عرض الملف الشخصي الكامل
 function viewTrainerProfile(id) {
     const trainer = trainers.find(t => t.id === id);
@@ -2217,9 +2510,234 @@ function viewTrainerProfile(id) {
             <h3><i class="fas fa-info-circle"></i> التفاصيل الكاملة</h3>
             <p>${trainer.details || 'لا توجد تفاصيل إضافية.'}</p>
         </div>
+        
+        <div class="profile-actions" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: center; gap: 15px;">
+                <button class="btn-action btn-download-profile" onclick="downloadTrainerProfile(${trainer.id})" style="background: var(--success-color);">
+                    <i class="fas fa-file-word"></i> تحميل الملف الشخصي
+                </button>
+                <button class="btn-action" onclick="viewIdImage(${trainer.id})" ${!(trainer.id_file || trainer.idFile) ? 'disabled' : ''}>
+                    <i class="fas fa-id-card"></i> بطاقة الهوية
+                </button>
+                <button class="btn-action" onclick="viewCvFile(${trainer.id})" ${!(trainer.cv_file || trainer.cvFile) ? 'disabled' : ''}>
+                    <i class="fas fa-file-pdf"></i> السيرة الذاتية
+                </button>
+            </div>
+        </div>
     `;
     
     document.getElementById('profileModal').style.display = 'flex';
+}
+
+// ============================================
+// تحميل الملف الشخصي بصيغة Word
+// ============================================
+
+// دالة لتحميل الملف الشخصي بصيغة Word
+function downloadTrainerProfile(trainerId) {
+    const trainer = trainers.find(t => t.id === trainerId);
+    if (!trainer) {
+        showNotification('لم يتم العثور على المدرب', 'error');
+        return;
+    }
+    
+    showNotification('جاري تحضير ملف المدرب للتحميل...', 'info');
+    
+    // إنشاء محتوى HTML للملف
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>الملف الشخصي للمدرب - ${trainer.name}</title>
+            <style>
+                body {
+                    font-family: 'Arial', sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: #f9f9f9;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #2c3e50, #3498db);
+                    color: white;
+                    border-radius: 10px;
+                }
+                .header h1 {
+                    margin: 0;
+                    font-size: 28px;
+                }
+                .header .subtitle {
+                    font-size: 16px;
+                    opacity: 0.9;
+                    margin-top: 10px;
+                }
+                .section {
+                    margin-bottom: 30px;
+                    padding: 20px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                .section h2 {
+                    color: #2c3e50;
+                    border-bottom: 2px solid #3498db;
+                    padding-bottom: 10px;
+                    margin-bottom: 20px;
+                }
+                .info-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 15px;
+                }
+                .info-item {
+                    margin-bottom: 15px;
+                }
+                .info-item strong {
+                    display: block;
+                    color: #2c3e50;
+                    margin-bottom: 5px;
+                    font-size: 16px;
+                }
+                .info-item span {
+                    color: #555;
+                    font-size: 14px;
+                }
+                .details {
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    border-right: 4px solid #3498db;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #ddd;
+                    color: #666;
+                    font-size: 14px;
+                }
+                .logo {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .logo h3 {
+                    color: #2c3e50;
+                    margin: 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="logo">
+                <h3>أكاديمية هاير للابتكار</h3>
+                <p>نظام إدارة المدربين - الإصدار 2.3</p>
+            </div>
+            
+            <div class="header">
+                <h1>الملف الشخصي للمدرب</h1>
+                <div class="subtitle">${trainer.name}</div>
+            </div>
+            
+            <div class="section">
+                <h2>المعلومات الأساسية</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>اسم المدرب:</strong>
+                        <span>${trainer.name}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>رقم الهاتف:</strong>
+                        <span>${trainer.phone}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>البريد الإلكتروني:</strong>
+                        <span>${trainer.email}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>الجنسية:</strong>
+                        <span>${trainer.nationality}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>الجنس:</strong>
+                        <span>${trainer.gender}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>المؤهل العلمي:</strong>
+                        <span>${trainer.qualification}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>التخصص:</strong>
+                        <span>${trainer.specialization}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>تاريخ الإضافة:</strong>
+                        <span>${new Date(trainer.created_at || trainer.createdAt).toLocaleDateString('ar-EG')}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>التفاصيل الإضافية</h2>
+                <div class="details">
+                    ${trainer.details || 'لا توجد تفاصيل إضافية.'}
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>معلومات النظام</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>معرف المدرب:</strong>
+                        <span>${trainer.id}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>تاريخ الإنشاء:</strong>
+                        <span>${new Date(trainer.created_at || trainer.createdAt).toLocaleDateString('ar-EG')}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>آخر تحديث:</strong>
+                        <span>${new Date(trainer.updated_at || trainer.updatedAt).toLocaleDateString('ar-EG')}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>تاريخ التصدير:</strong>
+                        <span>${new Date().toLocaleDateString('ar-EG')}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>تم إنشاء هذا الملف بواسطة نظام إدارة مدربين أكاديمية هاير للابتكار</p>
+                <p>© ${new Date().getFullYear()} أكاديمية هاير للابتكار. جميع الحقوق محفوظة.</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // إنشاء Blob من محتوى HTML
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    
+    // إنشاء رابط للتحميل
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ملف_المدرب_${trainer.name}_${trainer.id}.doc`;
+    
+    // إضافة الرابط إلى المستند والنقر عليه
+    document.body.appendChild(a);
+    a.click();
+    
+    // تنظيف
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification(`تم تحميل ملف المدرب ${trainer.name} بنجاح!`, 'success');
+    }, 100);
 }
 
 // تنسيق حجم الملف
@@ -2365,17 +2883,20 @@ function updateStats() {
     const male = trainers.filter(t => t.gender === 'ذكر').length;
     const female = trainers.filter(t => t.gender === 'أنثى').length;
     const phd = trainers.filter(t => t.qualification === 'دكتوراه').length;
+    const totalCourses = courses.length;
     
     // تحديث الرأس
     document.getElementById('totalTrainers').textContent = total;
     document.getElementById('maleTrainers').textContent = male;
     document.getElementById('femaleTrainers').textContent = female;
+    document.getElementById('totalCourses').textContent = totalCourses;
     
     // تحديث قسم الإحصائيات
     document.getElementById('statTotal').textContent = total;
     document.getElementById('statMale').textContent = male;
     document.getElementById('statFemale').textContent = female;
     document.getElementById('statPhd').textContent = phd;
+    document.getElementById('statCourses').textContent = totalCourses;
 }
 
 // ============================================
@@ -2392,7 +2913,7 @@ function exportTrainersData() {
             trainerCount: trainers.length,
             courseCount: courses.length,
             system: 'أكاديمية هاير للابتكار',
-            version: '2.2'
+            version: '2.3'
         };
         
         const dataStr = JSON.stringify(exportData, null, 2);
@@ -2469,6 +2990,7 @@ async function handleImport(event) {
                 // إعادة التصفية والعرض
                 renderTrainers();
                 renderCourses();
+                updateStats();
                 
                 showNotification(`تم استيراد ${importedCount} مدرب و ${courseImportedCount} كورس بنجاح!`, 'success');
             }
@@ -2490,7 +3012,7 @@ function exportCoursesData() {
             exportDate: new Date().toISOString(),
             courseCount: courses.length,
             system: 'أكاديمية هاير للابتكار',
-            version: '2.2'
+            version: '2.3'
         };
         
         const dataStr = JSON.stringify(exportData, null, 2);
@@ -2550,6 +3072,7 @@ async function handleCoursesImport(event) {
                 
                 // إعادة التصفية والعرض
                 renderCourses();
+                updateStats();
                 
                 showNotification(`تم استيراد ${importedCount} كورس بنجاح!`, 'success');
             }
@@ -2583,6 +3106,7 @@ function handleRestore() {
         
         renderTrainers();
         renderCourses();
+        updateStats();
         
         showNotification('تم استعادة النسخة الاحتياطية المحلية بنجاح!', 'success');
     }
@@ -2763,6 +3287,7 @@ async function deleteAllCourses() {
         
         // إعادة التصفية والعرض
         renderCourses(1);
+        updateStats();
         updateStorageStatus();
         
         // إغلاق النافذة المنبثقة
@@ -2828,6 +3353,10 @@ function showProtectionSettings() {
                     </div>
                     
                     <div class="protection-actions" style="margin-top: 30px; display: flex; flex-direction: column; gap: 15px;">
+                        <button class="btn-action" id="managePermissions_${modalId}" style="justify-content: center; background: var(--primary-color);">
+                            <i class="fas fa-user-shield"></i> إدارة الصلاحيات
+                        </button>
+                        
                         <button class="btn-add" id="changePasswordFromSettings_${modalId}" style="justify-content: center;">
                             <i class="fas fa-key"></i> تغيير كلمة المرور
                         </button>
@@ -2847,6 +3376,7 @@ function showProtectionSettings() {
                         <h4><i class="fas fa-info-circle"></i> معلومات الحماية:</h4>
                         <ul style="margin-right: 20px;">
                             <li>كلمة المرور مطلوبة للإجراءات الحساسة</li>
+                            <li>يمكنك إدارة الصلاحيات للتحكم في الإجراءات التي تتطلب كلمة مرور</li>
                             <li>الحد الأقصى للمحاولات: ${MAX_ATTEMPTS} محاولات</li>
                             <li>مدة القفل بعد التجاوز: ${LOCK_TIME/60000} دقيقة</li>
                             <li>الحماية تعمل على جميع المتصفحات</li>
@@ -2868,6 +3398,7 @@ function showProtectionSettings() {
     const changePasswordBtn = document.getElementById(`changePasswordFromSettings_${modalId}`);
     const resetBtn = document.getElementById(`resetProtection_${modalId}`);
     const unlockBtn = document.getElementById(`unlockSystem_${modalId}`);
+    const managePermissionsBtn = document.getElementById(`managePermissions_${modalId}`);
     
     // إغلاق النموذج
     closeBtn.addEventListener('click', () => {
@@ -2878,6 +3409,12 @@ function showProtectionSettings() {
     changePasswordBtn.addEventListener('click', () => {
         modal.remove();
         requirePassword('change_password', openChangePasswordModal);
+    });
+    
+    // إدارة الصلاحيات (محمية بكلمة مرور)
+    managePermissionsBtn.addEventListener('click', () => {
+        modal.remove();
+        showPermissionsModal();
     });
     
     // إعادة تعيين الحماية
@@ -2967,9 +3504,10 @@ function testSystem() {
 loadThemePreference();
 
 // اختبار النظام
-console.log('🚀 نظام إدارة مدربين أكاديمية هاير للابتكار - الإصدار 2.2');
-console.log('🔒 نظام حماية كامل لكل إجراء');
+console.log('🚀 نظام إدارة مدربين أكاديمية هاير للابتكار - الإصدار 2.3');
+console.log('🔒 نظام حماية كامل مع صلاحيات متقدمة');
 console.log('🔑 إمكانية تغيير كلمة المرور');
+console.log('🔧 نظام إدارة الصلاحيات متكامل');
 console.log('✅ الاتصال بقاعدة البيانات Supabase');
 console.log('✅ الحفظ التلقائي مفعل');
 console.log('✅ إدارة الكورسات مفعلة');
@@ -2991,5 +3529,6 @@ window.requirePassword = requirePassword;
 window.testSystem = testSystem;
 window.renderTrainers = renderTrainers;
 window.renderCourses = renderCourses;
+window.downloadTrainerProfile = downloadTrainerProfile;
 
 console.log("🎉 النظام جاهز للعمل!");
