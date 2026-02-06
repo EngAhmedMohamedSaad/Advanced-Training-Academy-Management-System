@@ -36,7 +36,7 @@
 
             <!-- Navigation Links -->
             <div class="nav-links" role="menubar">
-                <a href="#" class="active" id="navHome" role="menuitem" aria-current="page">
+               <a href="#home" class="active" id="navHome" role="menuitem" aria-current="page">
                     <i class="fas fa-home" aria-hidden="true"></i> الرئيسية
                 </a>
                 <a href="#trainers" id="navTrainers" role="menuitem">
@@ -76,7 +76,7 @@
     </nav>
 
     <!-- ==================== Header/Hero ==================== -->
-    <header class="hero" role="banner">
+    <header class="hero" id="home" role="banner">
         <div class="hero-content">
             <h2>نظام إدارة مدربين وكورسات أكاديمية هاير انوفيشن</h2>
             <p>إدارة احترافية لأكثر من 800 مدرب مع إمكانيات متقدمة للبحث والتصفية والتعديل</p>
@@ -86,6 +86,10 @@
                 <div class="feature" role="listitem">
                     <i class="fas fa-save" aria-hidden="true"></i>
                     <span>حفظ تلقائي</span>
+                </div>
+                <div class="feature" role="listitem">
+                    <i class="fas fa-database" aria-hidden="true"></i>
+                    <span>قاعدة بيانات</span>
                 </div>
                 <div class="feature" role="listitem">
                     <i class="fas fa-search" aria-hidden="true"></i>
@@ -114,6 +118,11 @@
                 <div class="stat">
                     <span class="stat-number" id="femaleTrainers">0</span>
                     <span class="stat-label">مدربات إناث</span>
+                </div>
+                <!-- في السطر 126 - تم إضافة قسم الكورسات -->
+                <div class="stat">
+                    <span class="stat-number" id="totalCourses">0</span>
+                    <span class="stat-label">كورس</span>
                 </div>
                 <div class="stat">
                     <span class="stat-number" id="storageStatus">100%</span>
@@ -340,6 +349,16 @@
                             <p class="stat-value" id="statFemale">0</p>
                         </div>
                     </div>
+                     <!-- في السطر 322 - تم إضافة بطاقة الكورسات -->
+                        <div class="stat-card" role="region" aria-label="إجمالي الكورسات">
+                            <div class="stat-icon">
+                                <i class="fas fa-book" aria-hidden="true"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h4>إجمالي الكورسات</h4>
+                                <p class="stat-value" id="statCourses">0</p>
+                            </div>
+                        </div>
                     <div class="stat-card" role="region" aria-label="حاملي الدكتوراه">
                         <div class="stat-icon">
                             <i class="fas fa-graduation-cap" aria-hidden="true"></i>
